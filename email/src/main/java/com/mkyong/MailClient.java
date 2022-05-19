@@ -159,7 +159,6 @@ public class MailClient{
 					IOUtils.closeQuietly(inputStream);
 				}
 				helper.addInline((String) pairs.getKey(), somethingFile);
-
 			}
 
 			javaMailSender.send(msg);

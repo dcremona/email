@@ -1,7 +1,12 @@
 package com.mkyong;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import javax.mail.MessagingException;
@@ -18,7 +23,6 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
 
@@ -59,71 +63,53 @@ public class Application implements CommandLineRunner{
 
 		try {
 			
-			MimeMessage msg = javaMailSender.createMimeMessage();
-			msg.setFrom("notifiche-fclt@hostingtt.it");
-			
-			// use the true flag to indicate you need a multipart message
-			MimeMessageHelper helper = new MimeMessageHelper(msg, true);
-			helper.setTo("davcic@libero.it");
-			helper.setCc("davide.cremona@gmail.com");
-
-			// use the true flag to indicate the text included is HTML
-			helper.setText("<html><body><img src='cid:identifier1234'></body></html>", true);
-
-			// let's include the infamous windows Sample file (this time copied to c:/)
-			FileSystemResource res = new FileSystemResource(new File("/app/android.png"));
-			helper.addInline("identifier1234", res);
-
-			javaMailSender.send(msg);
-			
 			// sendEmail();
 			// sendEmailWithAttachment();
+			// sendEmailInline();
 
-//			Properties p = new Properties();
-//			p.setProperty("from", "notifiche-fclt@hostingtt.it");
-//			p.setProperty("to", "davcic@libero.it");
-//
-//			MailClient client = new MailClient(javaMailSender);
-//
-//			String fromS = (String) p.getProperty("from");
-//			String toS = (String) p.getProperty("to");
-//
-//			String[] to = null;
-//			if (toS != null && !toS.equals("")) {
-//				to = tornaArrayString(toS, ";");
-//			}
-//
-//			String subject = "Test Ogg";
-//
-//			String cid = ContentIdGenerator.getContentId();
-//
-//			String message = "<html><head>" + "<title>This is not usually" + "displayed</title>" + "</head>\n" + "<body><div><b>Hi there!</b></div>" 
-//			+ "<div>Sending HTML in email is so <i>cool!</i> </div>\n" + "<div>And" + "here's an image: <img src=\"cid:" + cid + "\" /></div>\n" + "<div>I hope" + "you like it!</div></body></html>";
-//			
-//			String[] cc = null;
-//			String[] bcc = null;
-//			String[] att = new String[] { "/app/android.png" };
-//
-//			// client.sendMail(fromS, to, cc, bcc, subject, message,
-//			// "text/html", "1", att);
-//
-//			File file = new File("/app/android.png");
-//			InputStream targetStream = new FileInputStream(file);
-//
-//			Map<String, InputStream> images = new HashMap<String, InputStream>();
-//			images.put(cid, targetStream);
-//			client.sendMail2(fromS, to, cc, bcc, subject, message, "text/html", "1", images);
+			Properties p = new Properties();
+			p.setProperty("from", "notifiche-fclt@hostingtt.it");
+			p.setProperty("to", "davide.cremona@gmail.com");
+
+			MailClient client = new MailClient(javaMailSender);
+
+			String fromS = (String) p.getProperty("from");
+			String toS = (String) p.getProperty("to");
+
+			String[] to = null;
+			if (toS != null && !toS.equals("")) {
+				to = tornaArrayString(toS, ";");
+			}
+
+			String subject = "Test Ogg";
+
+			String cid = ContentIdGenerator.getContentId();
+
+			String message = "<html><head>" + "<title>This is not usually" + "displayed</title>" + "</head>\n" + "<body><div><b>Hi there!</b></div>" 
+			+ "<div>Sending HTML in email is so <i>cool!</i> </div>\n" + "<div>And" + "here's an image: <img src=\"cid:" + cid + "\" /></div>\n" + "<div>I hope" + "you like it!</div></body></html>";
+			
+			String[] cc = null;
+			String[] bcc = null;
+			String[] att = new String[] { "/app/data/TOMORI.png" };
+
+			client.sendMail(fromS, to, cc, bcc, subject, message, "text/html", "1", att);
+
+			File file = new File("/app/data/TOMORI.png");
+			InputStream targetStream = new FileInputStream(file);
+
+			Map<String, InputStream> images = new HashMap<String, InputStream>();
+			images.put(cid, targetStream);
+			client.sendMail2(fromS, to, cc, bcc, subject, message, "text/html", "1", images);
 
 		} catch (MessagingException e) {
 			e.printStackTrace();
 			LOGGER.error(e.getMessage());
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//			LOGGER.error(e.getMessage());
+		} catch (IOException e) {
+			e.printStackTrace();
+			LOGGER.error(e.getMessage());
 		}
 
 		System.out.println("Done");
-
 	}
 
 	void sendEmail() {
@@ -170,4 +156,25 @@ public class Application implements CommandLineRunner{
 		javaMailSender.send(msg);
 
 	}
+	
+	void sendEmailInline() throws MessagingException, IOException {
+
+		MimeMessage msg = javaMailSender.createMimeMessage();
+		msg.setFrom("notifiche-fclt@hostingtt.it");
+		
+		// use the true flag to indicate you need a multipart message
+		MimeMessageHelper helper = new MimeMessageHelper(msg, true);
+		helper.setTo("davide.cremona@gmail.com");
+
+		// use the true flag to indicate the text included is HTML
+		helper.setText("<html><body><img src='cid:identifier1234'></body></html>", true);
+
+		// let's include the infamous windows Sample file (this time copied to c:/)
+		FileSystemResource res = new FileSystemResource(new File("/app/data/TOMORI.png"));
+		helper.addInline("identifier1234", res);
+
+		javaMailSender.send(msg);
+
+	}
+
 }

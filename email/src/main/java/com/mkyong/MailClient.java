@@ -15,16 +15,16 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
 public class MailClient{
 
 	private static final Logger log = LoggerFactory.getLogger(MailClient.class);
 
-	private JavaMailSender javaMailSender;
+	private JavaMailSenderImpl javaMailSender;
 
-	public MailClient(JavaMailSender jMS) {
+	public MailClient(JavaMailSenderImpl jMS) {
 		javaMailSender = jMS;
 	}
 
@@ -47,6 +47,7 @@ public class MailClient{
 			msg.setFrom(from);
 
 			MimeMessageHelper helper = new MimeMessageHelper(msg,true);
+			helper.setFrom(from, "notifiche-fclt");
 			helper.setTo(to);
 			if (cc != null) {
 				helper.setCc(cc);
@@ -77,6 +78,7 @@ public class MailClient{
 				msg.setFrom(from);
 				MimeMessageHelper helper = new MimeMessageHelper(msg,true);
 				helper.setTo(to);
+				helper.setFrom(from, "notifiche-fclt");
 				if (cc != null) {
 					helper.setCc(cc);
 				}
@@ -129,6 +131,7 @@ public class MailClient{
 
 			MimeMessageHelper helper = new MimeMessageHelper(msg,true);
 			helper.setTo(to);
+			helper.setFrom(from, "notifiche-fclt");
 			if (cc != null) {
 				helper.setCc(cc);
 			}
@@ -171,6 +174,7 @@ public class MailClient{
 				msg.setFrom(from);
 				MimeMessageHelper helper = new MimeMessageHelper(msg,true);
 				helper.setTo(to);
+				helper.setFrom(from, "notifiche-fclt");
 				if (cc != null) {
 					helper.setCc(cc);
 				}

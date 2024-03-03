@@ -15,6 +15,7 @@ import javax.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -22,7 +23,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
 @SpringBootApplication
@@ -33,12 +34,19 @@ public class Application implements CommandLineRunner{
 	@Autowired
 	private Environment env;
 
-	// https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/integration.html#mail
-	@Autowired
-	private JavaMailSenderImpl javaMailSender;
+	// @Autowired
+	// private JavaMailSenderImpl javaMailSender;
 
-	// private final String from = "notifiche-fclt@hostingtt.it";
-	private final String from = "davcic@libero.it";
+	@Autowired
+	@Qualifier("primarySender")
+	JavaMailSender primarySender;
+
+	@Autowired
+	@Qualifier("secondarySender")
+	JavaMailSender secondarySender;
+
+	private final String fromPrimary = "notifiche-fclt@hostingtt.it";
+	private final String fromSecondary = "davcic@libero.it";
 
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
@@ -60,14 +68,27 @@ public class Application implements CommandLineRunner{
 
 		System.out.println("Sending Email..");
 
-		String springMailPassword = (String) env.getProperty("spring.mail.password");
-		System.out.println("springMailPassword " + springMailPassword);
+		String fcltMailPrimaryPassword = (String) env.getProperty("fclt.mail.primary.password");
+		System.out.println("fclt.mail.primary.password " + fcltMailPrimaryPassword);
+
+		String fcltMailSecondaryPassword = (String) env.getProperty("fclt.mail.secondary.password");
+		System.out.println("fclt.mail.secondary.password " + fcltMailSecondaryPassword);
 
 		try {
-			sendEmailLibero(springMailPassword);
-			sendEmail();
-			sendEmailWithAttachment();
-			sendEmailInline();
+
+			sendEmailPrimary();
+			sendEmailInlineSecondary();
+
+			sendEmailWithAttachmentPrimary();
+			sendEmailWithAttachmentSecondary();
+
+			sendEmailSecondary();
+			sendEmailInlineSecondary();
+
+			// sendEmailLibero(fcltMailSecondaryPassword);
+			// sendEmail();
+			// sendEmailWithAttachment();
+			// sendEmailInline();
 
 			// Properties p = new Properties();
 			// p.setProperty("from", from);
@@ -124,8 +145,7 @@ public class Application implements CommandLineRunner{
 	void sendEmailLibero(String springMailPassword) throws Exception {
 
 		Properties props = new Properties();
-		props.put("mail.smtp.host", "smtp.libero.it"); // for gmail use
-														// smtp.gmail.com
+		props.put("mail.smtp.host", "smtp.libero.it");
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.debug", "true");
 		props.put("mail.smtp.starttls.enable", "true");
@@ -148,41 +168,77 @@ public class Application implements CommandLineRunner{
 
 		msg.setText("Hello from my first e-mail sent with JavaMail");
 
-		Transport transport = mailSession.getTransport("smtps"); // ("smtp") per
-																	// non usare
-																	// SSL
+		Transport transport = mailSession.getTransport("smtps");
 		/* criptare la password */
 		transport.connect("smtp.libero.it", "davcic@libero.it", springMailPassword);
 		transport.sendMessage(msg, msg.getAllRecipients());
 		transport.close();
-
 	}
 
-	void sendEmail() throws Exception {
-
+	void sendEmailPrimary() throws Exception {
 		SimpleMailMessage msg = new SimpleMailMessage();
-		msg.setFrom(from);
-
+		msg.setFrom(fromPrimary);
 		msg.setTo("davide.cremona@gmail.com", "davis_cremona@hotmail.com", "davcic@libero.it");
+		msg.setSubject("Testing from Spring Boot sendEmailPrimary");
+		msg.setText("Hello World \n Spring Boot Email sendEmailPrimary");
+		primarySender.send(msg);
+	}
 
-		msg.setSubject("Testing from Spring Boot");
-		msg.setText("Hello World \n Spring Boot Email");
+	void sendEmailSecondary() throws Exception {
+		SimpleMailMessage msg = new SimpleMailMessage();
+		msg.setFrom(fromSecondary);
+		msg.setTo("davide.cremona@gmail.com", "davis_cremona@hotmail.com");
+		msg.setSubject("Testing from Spring Boot sendEmailSecondary");
+		msg.setText("Hello World \n Spring Boot Email sendEmailSecondary");
+		secondarySender.send(msg);
+	}
 
-		javaMailSender.send(msg);
+	void sendEmailInlinePrimary() throws Exception {
+
+		MimeMessage msg = primarySender.createMimeMessage();
+		msg.setFrom(fromPrimary);
+		// use the true flag to indicate you need a multipart message
+		MimeMessageHelper helper = new MimeMessageHelper(msg,true);
+		helper.setTo("davide.cremona@gmail.com");
+		helper.setFrom(fromPrimary, "notifiche-fclt");
+		// use the true flag to indicate the text included is HTML
+		helper.setText("<html><body><img src='cid:identifier1234'></body></html>", true);
+		msg.setSubject("Testing primarySender");
+		// let's include the infamous windows Sample file (this time copied to
+		// c:/)
+		FileSystemResource res = new FileSystemResource(new File("/app/data/TOMORI.png"));
+		helper.addInline("identifier1234", res);
+		primarySender.send(msg);
 
 	}
 
-	void sendEmailWithAttachment() throws Exception {
+	void sendEmailInlineSecondary() throws Exception {
+		MimeMessage msg = secondarySender.createMimeMessage();
+		msg.setFrom(fromSecondary);
+		// use the true flag to indicate you need a multipart message
+		MimeMessageHelper helper = new MimeMessageHelper(msg,true);
+		helper.setTo("davide.cremona@gmail.com");
+		helper.setFrom(fromSecondary, "notifiche-fclt");
+		// use the true flag to indicate the text included is HTML
+		helper.setText("<html><body><img src='cid:identifier1234'></body></html>", true);
+		// let's include the infamous windows Sample file (this time copied to
+		msg.setSubject("Testing secondarySender");
+		FileSystemResource res = new FileSystemResource(new File("/app/data/TOMORI.png"));
+		helper.addInline("identifier1234", res);
+		secondarySender.send(msg);
+	}
 
-		MimeMessage msg = javaMailSender.createMimeMessage();
-		msg.setFrom(from);
+	void sendEmailWithAttachmentPrimary() throws Exception {
+
+		MimeMessage msg = primarySender.createMimeMessage();
+		msg.setFrom(fromPrimary);
 
 		// true = multipart message
 		MimeMessageHelper helper = new MimeMessageHelper(msg,true);
 		helper.setTo("davide.cremona@gmail.com");
-		helper.setFrom(from, "notifiche-fclt");
+		helper.setFrom(fromPrimary, "notifiche-fclt");
 
-		helper.setSubject("Testing from Spring Boot");
+		helper.setSubject("Testing from Spring Boot primarySender");
 
 		// default = text/plain
 		// helper.setText("Check attachment for image!");
@@ -200,29 +256,39 @@ public class Application implements CommandLineRunner{
 
 		helper.addAttachment("my_photo.png", new ClassPathResource("android.png"));
 
-		javaMailSender.send(msg);
+		primarySender.send(msg);
 
 	}
 
-	void sendEmailInline() throws Exception {
+	void sendEmailWithAttachmentSecondary() throws Exception {
 
-		MimeMessage msg = javaMailSender.createMimeMessage();
-		msg.setFrom(from);
+		MimeMessage msg = secondarySender.createMimeMessage();
+		msg.setFrom(fromSecondary);
 
-		// use the true flag to indicate you need a multipart message
+		// true = multipart message
 		MimeMessageHelper helper = new MimeMessageHelper(msg,true);
 		helper.setTo("davide.cremona@gmail.com");
-		helper.setFrom(from, "notifiche-fclt");
+		helper.setFrom(fromSecondary, "notifiche-fclt");
 
-		// use the true flag to indicate the text included is HTML
-		helper.setText("<html><body><img src='cid:identifier1234'></body></html>", true);
+		helper.setSubject("Testing from Spring Boot secondarySender");
 
-		// let's include the infamous windows Sample file (this time copied to
-		// c:/)
-		FileSystemResource res = new FileSystemResource(new File("/app/data/TOMORI.png"));
-		helper.addInline("identifier1234", res);
+		// default = text/plain
+		// helper.setText("Check attachment for image!");
 
-		javaMailSender.send(msg);
+		// true = text/html
+		helper.setText("<h1>Check attachment for image!</h1>", true);
+
+		// FileSystemResource file = new FileSystemResource(new
+		// File("classpath:android.png"));
+
+		// Resource resource = new ClassPathResource("android.png");
+		// InputStream input = resource.getInputStream();
+
+		// ResourceUtils.getFile("classpath:android.png");
+
+		helper.addAttachment("my_photo.png", new ClassPathResource("android.png"));
+
+		secondarySender.send(msg);
 
 	}
 

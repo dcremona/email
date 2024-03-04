@@ -41,6 +41,7 @@ public class EmailConfig{
 		return javaMailSenderWithProperties(javaMailSender, MAIL_SENDER_SECONDARY_PROPERTIES_KEY);
 	}
 
+	@SuppressWarnings("rawtypes")
 	private JavaMailSender javaMailSenderWithProperties(
 			JavaMailSenderImpl javaMailSender, String prefix) {
 		Properties props = new Properties();

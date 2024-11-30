@@ -66,13 +66,13 @@ public class Application implements CommandLineRunner{
 	@Override
 	public void run(String... args) {
 
-		System.out.println("Sending Email..");
+		LOGGER.info("Sending Email..");
 
 		String fcltMailPrimaryPassword = (String) env.getProperty("fclt.mail.primary.password");
-		System.out.println("fclt.mail.primary.password " + fcltMailPrimaryPassword);
+		LOGGER.info("fclt.mail.primary.password " + fcltMailPrimaryPassword);
 
 		String fcltMailSecondaryPassword = (String) env.getProperty("fclt.mail.secondary.password");
-		System.out.println("fclt.mail.secondary.password " + fcltMailSecondaryPassword);
+		LOGGER.info("fclt.mail.secondary.password " + fcltMailSecondaryPassword);
 
 		try {
 
